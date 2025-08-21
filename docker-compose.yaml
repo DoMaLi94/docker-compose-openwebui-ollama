@@ -1,0 +1,42 @@
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:v0.6.23
+    container_name: openwebui
+    restart: unless-stopped
+    expose:
+      - 3000/tcp
+    ports:
+      - 3000:8080/tcp
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      # uncomment the following if you are running ollama on 
+      # the docker host and remove the ollama service below
+      # - OLLAMA_BASE_URL=http://host.docker.internal:11434
+    volumes:
+      - open-webui:/app/backend/data
+    depends_on:
+      - ollama
+  ollama:
+    image: ollama/ollama:0.11.6
+    container_name: ollama
+    restart: always
+    expose:
+     - 11434/tcp
+    ports:
+     - 11434:11434/tcp
+    healthcheck:
+      test: ollama --version || exit 1
+    command: serve
+    volumes:
+      - ollama:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['all']
+              capabilities: [gpu]
+
+volumes:
+  ollama:
+  open-webui:
